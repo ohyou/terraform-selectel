@@ -65,12 +65,12 @@ variable "disk" {
     name    = "root"
     size    = 5
     type    = "fast"
-    images  = "Fedora 28 64-bit"
+    images  = "Centos 7 Minimal 64-bit"
   }
 }
 
 variable "metadata" {
-  description = "Metadata key/value pairs."
+  description = "Metadata key/value pairs"
   type        = "map"
 
   default = {
@@ -82,4 +82,3 @@ variable "keypair" {
   description = "Keypair name"
   type        = "string"
 }
-
