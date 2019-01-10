@@ -42,7 +42,7 @@ data "openstack_networking_subnet_v2" "wan" {
 }
 
 # -----------------------------------------------------------------------------
-# Private network configuration.
+# Private network.
 # -----------------------------------------------------------------------------
 
 resource "openstack_networking_network_v2" "lan" {

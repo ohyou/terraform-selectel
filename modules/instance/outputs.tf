@@ -6,8 +6,18 @@ data "null_data_source" "instance" {
   count = "${var.count}"
 
   inputs {
-    uuid  = "${openstack_compute_instance_v2.instance.*.id[count.index]}"
-    name  = "${openstack_compute_instance_v2.instance.*.name[count.index]}"
+    uuid  = "${
+      element(coalescelist(
+        openstack_compute_instance_v2.wan.*.id,
+        openstack_compute_instance_v2.lan.*.id
+      ), count.index)
+    }"
+    name  = "${
+      element(coalescelist(
+        openstack_compute_instance_v2.wan.*.name,
+        openstack_compute_instance_v2.lan.*.name
+      ), count.index)
+    }"
     disk  = "${openstack_blockstorage_volume_v2.root.*.id[count.index]}"
     lan   = "${element(openstack_networking_port_v2.lan.*.all_fixed_ips[count.index], 0)}"
     wan   = "${

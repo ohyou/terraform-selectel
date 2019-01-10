@@ -47,7 +47,7 @@ locals {
 }
 
 # -----------------------------------------------------------------------------
-# Private network provisioning.
+# Private network.
 # -----------------------------------------------------------------------------
 
 data "openstack_networking_network_v2" "lan" {
@@ -80,7 +80,7 @@ resource "openstack_networking_port_v2" "lan" {
 }
 
 # -----------------------------------------------------------------------------
-# Public network provisioning.
+# Public network.
 # -----------------------------------------------------------------------------
 
 data "openstack_networking_network_v2" "wan" {
@@ -109,12 +109,6 @@ resource "openstack_networking_port_v2" "wan" {
   }
 }
 
-resource "openstack_compute_interface_attach_v2" "wan" {
-  count       = "${local.has_wan && !local.external ? var.count : 0}"
-  instance_id = "${openstack_compute_instance_v2.instance.*.id[count.index]}"
-  port_id     = "${openstack_networking_port_v2.wan.*.id[count.index]}"
-}
-
 resource "openstack_networking_floatingip_v2" "wan" {
   count = "${
     local.has_wan && local.external && local.wan["address"] == "" ?
@@ -136,7 +130,7 @@ resource "openstack_networking_floatingip_associate_v2" "wan" {
 }
 
 # -----------------------------------------------------------------------------
-# Instance provisioning.
+# Instance.
 # -----------------------------------------------------------------------------
 
 resource "openstack_compute_flavor_v2" "instance" {
@@ -167,8 +161,44 @@ resource "openstack_blockstorage_volume_v2" "root" {
   image_id          = "${data.openstack_images_image_v2.system.id}"
 }
 
-resource "openstack_compute_instance_v2" "instance" {
-  count               = "${var.count}"
+resource "openstack_compute_instance_v2" "wan" {
+  count               = "${local.has_wan && !local.external ? var.count : 0}"
+  region              = "${local.region}"
+  availability_zone   = "${local.zone}"
+  name                = "${
+    var.count > 1 ?
+    "${var.name}-${count.index+1}.${local.domain}" :
+    "${var.name}.${local.domain}"
+  }"
+  flavor_id           = "${openstack_compute_flavor_v2.instance.id}"
+  key_pair            = "${var.keypair}"
+  power_state         = "active"
+  stop_before_destroy = true
+
+  metadata = "${var.metadata}"
+
+  block_device {
+    uuid              = "${openstack_blockstorage_volume_v2.root.*.id[count.index]}"
+    source_type       = "volume"
+    destination_type  = "volume"
+    boot_index        = 0
+  }
+
+  network {
+    port  = "${openstack_networking_port_v2.wan.*.id[count.index]}" 
+  }
+
+  network {
+    port  = "${openstack_networking_port_v2.lan.*.id[count.index]}"
+  }
+
+  vendor_options {
+    ignore_resize_confirmation = true
+  }
+}
+
+resource "openstack_compute_instance_v2" "lan" {
+  count               = "${local.has_wan && !local.external ? 0 : var.count}"
   region              = "${local.region}"
   availability_zone   = "${local.zone}"
   name                = "${
