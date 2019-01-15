@@ -1,9 +1,9 @@
-# Copyright 2018 Kodix LLC. All rights reserved.
+# Copyright 2019 Kodix LLC. All rights reserved.
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
 
 variable "cloud" {
-  description = "Cloud config"
+  description = "Cloud configuration"
   type        = "map"
 
   default = {
@@ -19,7 +19,7 @@ variable "name" {
   default = ""
 }
 
-variable "private" {
+variable "private_key" {
   description = "Private key"
   type        = "string"
 
